@@ -327,6 +327,7 @@ Labels: ` + labels
 	return nil
 }
 
+// extractAttachments takes a Card input and saves all attachments to disk.
 func extractAttachments(c safeincloud.Card, title string) error {
 	for i, file := range c.Files {
 		name := title + "_" + strconv.Itoa(i) + "_" + file.Name

@@ -6,6 +6,9 @@ to LastPass sites and secure notes.
 This is an opinionated tool as there are a number of assumptions made to how
 the cards are organized, labelled and filled out.
 
+This tool uses my abstracted SafeInCloud golang package, which can used for
+other conversation projects. https://github.com/eduncan911/safeincloud
+
 Features
 
 Finally, a SafeInCloud conversion tool that works - including attachment decoding.
@@ -34,7 +37,9 @@ Or, you can install from source:
 
 How to Use
 
-Use the binary at a command prompt to execute.
+Use the binary at a command prompt to execute.  When completed, you will end up
+with one or two CSV files in the same directory you executed from, as well
+as possibly an attachments/ folder that holds any secure attachments you had.
 
     $ sic2lp -h
     Usage of sic2lp:
@@ -86,11 +91,45 @@ Otherwise, the card will be created as a SecureNote (see below).
 
 * Card Labels
 
-Card Labels are used for two things: What folder to import into, and if the card
-is to be treated as a SecureNote what NoteType to use.
+LastPass does not have a concept of Labels or Tags.  Instead, they have a
+hierical structure of "Folders" with sub folders. (note: as of time of writing,
+LastPass does not support sub-folders on import).  Therefore, we must convert
+SafeInCloud's Labels to some structured form of Folders.
 
-Set your SafeInCloud card labels ahead of time so that this tool can import them into the proper
-Folder at LastPass, as well as the proper SecureNote NoteType if it is not a site.
+SafeInCloud's Card Labels are used for two things: What folder to import into,
+and if the card is to be treated as a SecureNote what NoteType to use.
+
+Overall, you can only import into a single Folder at LastPass.  To determine
+what that LastPass folder is to import into, we use some opinionated logic.
+
+The code looks at the CLI flag option of "-p" to determine what label will be
+assigned the primary folder.  It does this in order assigned to this param
+by iterating the primary folder list to see if the Card is assigned one of
+the labels.  The first match wins.
+
+You most likely want to set the preferred "Google" first and leave more
+generic labels "Banking,Personal" last.  That way, your preferred label is
+used first.
+
+Let's take an example: You have a card labelled with Banking, Personal and Google.
+You want cards labelled like this to be imported into Google and then Banking,
+but nothing in a Personal folder at LastPass (everything is Personal, right?).
+Therefore, your flag to pass on the CLI would be:
+
+    sic2lp ... -p "Google,Banking"
+
+This would import any cards that are labelled Google into the "Google" folder
+at LastPass, regardless of any other labels they may have.
+
+Lastly, if the card's label is not in the PriorityFolders slice then we'll
+just use the first one we find - prefixed with the specified
+"DefaultFolder - " to make it easier to sort.  Taking our earlier example, any
+cards labelled Personal would be imported into the "Imported - Personal" generic
+folder as "Imported" is the default folder name used (see CLI options to change).
+
+Therefore, set your SafeInCloud card labels ahead of time so that this tool
+can import them into the proper Folder at LastPass, as well as the proper
+SecureNote NoteType if it is not a site.
 
 * SecureNotes
 
